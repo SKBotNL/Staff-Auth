@@ -11,6 +11,7 @@ import net.trueog.staffauth.dto.admin.UpdateUserDto
 import net.trueog.staffauth.dto.admin.UserDto
 import net.trueog.staffauth.exception.user.ChangeOwnRoleException
 import net.trueog.staffauth.exception.user.DeactivateSelfException
+import net.trueog.staffauth.exception.user.InvalidMinecraftUuidException
 import net.trueog.staffauth.service.UserService
 
 @Controller("/user")
@@ -37,6 +38,9 @@ class UserController(private val userService: UserService) {
     @Delete("/{id}")
     suspend fun delete(@PathVariable id: Long): HttpResponse<Unit> =
         if (userService.delete(id) > 0) HttpResponse.noContent() else HttpResponse.notFound()
+
+    @Error(exception = InvalidMinecraftUuidException::class)
+    fun onInvalidMinecraftUuid(): HttpResponse<String> = HttpResponse.badRequest("INVALID_MINECRAFT_UUID")
 
     @Error(exception = DeactivateSelfException::class)
     fun onDeactivateSelf(): HttpResponse<String> = HttpResponse.badRequest("DEACTIVATE_SELF")

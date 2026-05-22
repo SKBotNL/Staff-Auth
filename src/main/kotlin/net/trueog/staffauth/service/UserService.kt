@@ -10,6 +10,7 @@ import net.trueog.staffauth.dto.admin.UserDto
 import net.trueog.staffauth.exception.user.ChangeOwnRoleException
 import net.trueog.staffauth.exception.user.DeactivateSelfException
 import net.trueog.staffauth.exception.user.DuplicateMinecraftUuidException
+import net.trueog.staffauth.exception.user.InvalidMinecraftUuidException
 import net.trueog.staffauth.repository.UserRepository
 
 @Singleton
@@ -43,6 +44,7 @@ class UserService(private val userRepository: UserRepository, private val minecr
             throw ChangeOwnRoleException()
         }
 
+        val username = minecraftClient.getByUuid(updateUserDto.minecraftUuid ?: user.minecraftUuid)?.name ?: throw InvalidMinecraftUuidException()
         val updatedUser = userRepository.update(
             user.copy(
                 email = updateUserDto.email ?: user.email,
@@ -51,7 +53,6 @@ class UserService(private val userRepository: UserRepository, private val minecr
                 deactivated = updateUserDto.deactivated ?: user.deactivated
             )
         )
-        val username = minecraftClient.getByUuid(updatedUser.minecraftUuid)?.name ?: throw IllegalStateException()
         return UserDto.fromEntity(updatedUser, username)
     }
 
