@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import net.trueog.staffauth.dto.admin.CreateUserDto
 import net.trueog.staffauth.dto.admin.UpdateUserDto
 import net.trueog.staffauth.dto.admin.UserDto
+import net.trueog.staffauth.exception.user.ChangeOwnRoleException
 import net.trueog.staffauth.exception.user.DeactivateSelfException
 import net.trueog.staffauth.service.UserService
 
@@ -40,4 +41,6 @@ class UserController(private val userService: UserService) {
     @Error(exception = DeactivateSelfException::class)
     fun onDeactivateSelf(): HttpResponse<String> = HttpResponse.badRequest("DEACTIVATE_SELF")
 
+    @Error(exception = ChangeOwnRoleException::class)
+    fun onChangeOwnRole(): HttpResponse<String> = HttpResponse.badRequest("CHANGE_OWN_ROLE")
 }

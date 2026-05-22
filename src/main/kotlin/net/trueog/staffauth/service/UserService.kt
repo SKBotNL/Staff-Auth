@@ -7,6 +7,7 @@ import net.trueog.staffauth.client.MinecraftClient
 import net.trueog.staffauth.dto.admin.CreateUserDto
 import net.trueog.staffauth.dto.admin.UpdateUserDto
 import net.trueog.staffauth.dto.admin.UserDto
+import net.trueog.staffauth.exception.user.ChangeOwnRoleException
 import net.trueog.staffauth.exception.user.DeactivateSelfException
 import net.trueog.staffauth.exception.user.DuplicateMinecraftUuidException
 import net.trueog.staffauth.repository.UserRepository
@@ -37,6 +38,9 @@ class UserService(private val userRepository: UserRepository, private val minecr
         ) throw DuplicateMinecraftUuidException()
         if (updateUserDto.deactivated == true && user.id.toString() == auth.attributes["sub"]) {
             throw DeactivateSelfException()
+        }
+        if (updateUserDto.role != user.role && user.id.toString() == auth.attributes["sub"]) {
+            throw ChangeOwnRoleException()
         }
 
         val updatedUser = userRepository.update(
