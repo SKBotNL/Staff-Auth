@@ -1,0 +1,27 @@
+micronaut:
+  server:
+    port: 8080
+  security:
+    oauth2:
+      clients:
+        staffauth:
+          client-id: staff-auth-panel
+          client-secret: secret
+          openid:
+            issuer: http://localhost:4444
+            end-session:
+              url: http://localhost:4444/oauth2/sessions/logout
+
+plugin:
+  address: http://localhost:65226
+
+frontend:
+  host: http://localhost:3000
+
+hydra:
+  host: http://localhost:4445
+
+db:
+  url: postgresql://localhost:5432/staffauth
+  user: username
+  password: password

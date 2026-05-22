@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_outer_classname = "IpCheckProto";
+
+package proto;
+
+service IpChecker {
+  rpc CheckIp (IpCheckRequest) returns (IpCheckReply) {}
+}
+
+message IpCheckRequest {
+  string uuid = 1;
+}
+
+message IpCheckReply {
+  string ip = 1;
+}
