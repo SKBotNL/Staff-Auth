@@ -118,7 +118,7 @@ class LoginService(
             loginRequest.challenge,
             AcceptOAuth2LoginRequest().subject(loginStage.userId.toString()).remember(true).rememberFor(3600)
         )
-        loginStageMap.invalidate(loginChallenge);
+        loginStageMap.invalidate(loginChallenge)
         return response.redirectTo
     }
 }
