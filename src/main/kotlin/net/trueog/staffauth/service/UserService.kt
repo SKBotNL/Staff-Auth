@@ -35,7 +35,7 @@ class UserService(private val userRepository: UserRepository, private val minecr
         if (updateUserDto.minecraftUuid != null && userRepository.findByMinecraftUuid(updateUserDto.minecraftUuid)
                 ?.let { it.id != user.id } == true
         ) throw DuplicateMinecraftUuidException()
-        if (user.id.toString() == auth.attributes["sub"]) {
+        if (updateUserDto.deactivated == true && user.id.toString() == auth.attributes["sub"]) {
             throw DeactivateSelfException()
         }
 
