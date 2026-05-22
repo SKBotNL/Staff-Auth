@@ -53,6 +53,13 @@ class SetupService(
         }
 
         val invite = inviteRepository.findByToken(token) ?: throw InvalidInviteException()
+
+        val user = userRepository.findById(invite.invitedUserId) ?: throw InvalidInviteException()
+        // Don't let user set up their account if the account is deactivated
+        if (user.deactivated) {
+            throw DeactivatedException()
+        }
+
         val details = SetupStage.AwaitingMinecraftCheck(
             invite.invitedUserId, SetupStage.Details(
                 detailsDto.email,
@@ -70,10 +77,6 @@ class SetupService(
 
         // If the user can't be found, that must mean the user was deleted, and as such, the invite is invalid
         val user = userRepository.findById(setupStage.userId) ?: throw InvalidInviteException()
-        // Don't let user set up their account if the account is deactivated
-        if (user.deactivated) {
-            throw DeactivatedException()
-        }
 
         val reply = ipCheckerStub.checkIp(ipCheckRequest {
             this.uuid = user.minecraftUuid.toString()
@@ -110,7 +113,7 @@ class SetupService(
             .period(30)
             .build()
 
-        val generator = ZxingPngQrGenerator();
+        val generator = ZxingPngQrGenerator()
         val imageData = generator.generate(qrCodeData)
 
         val qrCode = getDataUriForImage(imageData, generator.imageMimeType)
