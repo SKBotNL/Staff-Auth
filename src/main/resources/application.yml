@@ -26,6 +26,10 @@ micronaut:
             - openid
             - profile
             - roles
+  caches:
+    minecraft-profiles:
+      charset: UTF-8
+      expire-after-write: 30m
 
 grpc:
   server:
