@@ -1,0 +1,54 @@
+micronaut:
+  application:
+    name: staff-auth
+  server:
+    port: 8081
+    cors:
+      enabled: true
+      configurations:
+        default:
+          allowedOrigins:
+            - ${frontend.host}
+  security:
+    authentication: idtoken
+    reject-not-found: false
+    redirect:
+      login-success: ${frontend.host}
+      login-failure: ${frontend.host}
+      logout: ${frontend.host}/logged-out
+    endpoints:
+      logout:
+        get-allowed: true
+    oauth2:
+      clients:
+        staffauth:
+          scopes:
+            - openid
+            - profile
+            - roles
+
+grpc:
+  server:
+    port: 65225
+  client:
+    plaintext: true
+
+datasources:
+  default:
+    url: jdbc:${db.url}
+    username: ${db.user}
+    password: ${db.password}
+    driver-class-name: org.postgresql.Driver
+    db-type: postgres
+
+r2dbc:
+  datasources:
+    default:
+      url: r2dbc:${db.url}
+      username: ${db.user}
+      password: ${db.password}
+
+flyway:
+  datasources:
+    default:
+      enabled: true
