@@ -38,7 +38,7 @@ open class SetupController(
     }
 
     @Post("/totpsetup")
-    suspend fun totpSetup(@Body tokenDto: TokenDto): TotpDto {
+    suspend fun totpSetup(@Body tokenDto: TokenDto): TotpSetupDto {
         return setupService.generateTotp(tokenDto.token)
     }
 

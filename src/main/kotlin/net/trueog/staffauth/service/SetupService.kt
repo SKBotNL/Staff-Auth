@@ -9,8 +9,8 @@ import dev.samstevens.totp.secret.SecretGenerator
 import dev.samstevens.totp.util.Utils.getDataUriForImage
 import jakarta.inject.Singleton
 import net.trueog.staffauth.client.MinecraftClient
+import net.trueog.staffauth.dto.TotpSetupDto
 import net.trueog.staffauth.dto.setup.DetailsDto
-import net.trueog.staffauth.dto.setup.TotpDto
 import net.trueog.staffauth.exception.IncorrectTotpCodeException
 import net.trueog.staffauth.exception.invite.InvalidInviteException
 import net.trueog.staffauth.exception.setup.DeactivatedException
@@ -29,6 +29,7 @@ class SetupService(
     private val inviteRepository: InviteRepository,
     private val passwordEncoderService: Argon2idPasswordEncoderService,
     private val ipCheckerStub: IpCheckerGrpcKt.IpCheckerCoroutineStub,
+    private val totpService: TotpService,
     private val secretGenerator: SecretGenerator,
     private val codeVerifier: CodeVerifier,
     private val minecraftClient: MinecraftClient
@@ -88,7 +89,7 @@ class SetupService(
         return valid
     }
 
-    suspend fun generateTotp(token: String): TotpDto {
+    suspend fun generateTotp(token: String): TotpSetupDto {
         val setupStage = setupStageMap.getIfPresent(token) ?: throw InvalidInviteException()
         val (secret, userId, passwordHash) = if (setupStage !is SetupStage.AwaitingTotp) {
             if (setupStage is SetupStage.AwaitingTotpVerify) {
@@ -104,23 +105,11 @@ class SetupService(
         val minecraftUuid = userRepository.findById(userId)?.minecraftUuid ?: throw InvalidInviteException()
         val minecraftProfileDto = minecraftClient.getByUuid(minecraftUuid)
 
-        val qrCodeData = QrData.Builder()
-            .label(minecraftProfileDto?.name ?: throw IllegalStateException())
-            .secret(secret)
-            .issuer("Staff-OG")
-            .algorithm(HashingAlgorithm.SHA1)
-            .digits(6)
-            .period(30)
-            .build()
-
-        val generator = ZxingPngQrGenerator()
-        val imageData = generator.generate(qrCodeData)
-
-        val qrCode = getDataUriForImage(imageData, generator.imageMimeType)
+        val (_, qrCode) = totpService.generateTotp(minecraftProfileDto?.name ?: throw IllegalStateException())
 
         setupStageMap.put(token, SetupStage.AwaitingTotpVerify(userId, passwordHash, secret))
 
-        return TotpDto(secret, qrCode)
+        return TotpSetupDto(secret, qrCode)
     }
 
     fun verifyTotp(token: String, code: String) {
@@ -131,7 +120,7 @@ class SetupService(
             throw InvalidTotpCodeLengthException()
         }
 
-        if (!codeVerifier.isValidCode(setupStage.totpSecret, code)) {
+        if (!totpService.isValid(setupStage.totpSecret, code)) {
             throw IncorrectTotpCodeException()
         }
 
