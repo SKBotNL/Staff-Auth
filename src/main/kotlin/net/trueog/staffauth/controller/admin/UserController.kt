@@ -37,14 +37,17 @@ class UserController(private val userService: UserService) {
         } ?: HttpResponse.notFound()
 
     @Delete("/{id}")
-    suspend fun delete(@PathVariable id: Long): HttpResponse<Unit> =
-        if (userService.delete(id) > 0) HttpResponse.noContent() else HttpResponse.notFound()
+    suspend fun delete(@PathVariable id: Long, auth: Authentication): HttpResponse<Unit> =
+        if (userService.delete(id, auth) > 0) HttpResponse.noContent() else HttpResponse.notFound()
 
     @Error(exception = InvalidMinecraftUuidException::class)
     fun onInvalidMinecraftUuid(): HttpResponse<String> = HttpResponse.badRequest("INVALID_MINECRAFT_UUID")
 
     @Error(exception = DeactivateSelfException::class)
     fun onDeactivateSelf(): HttpResponse<String> = HttpResponse.badRequest("DEACTIVATE_SELF")
+
+    @Error(exception = DeleteSelfException::class)
+    fun onDeleteSelf(): HttpResponse<String> = HttpResponse.badRequest("DELETE_SELF")
 
     @Error(exception = ChangeOwnRoleException::class)
     fun onChangeOwnRole(): HttpResponse<String> = HttpResponse.badRequest("CHANGE_OWN_ROLE")

@@ -56,6 +56,11 @@ class UserService(private val userRepository: UserRepository, private val minecr
         return UserDto.fromEntity(updatedUser, username)
     }
 
-    suspend fun delete(id: Long) = userRepository.deleteById(id)
-
+    suspend fun delete(id: Long, auth: Authentication): Int {
+        val user = userRepository.findById(id) ?: throw IllegalStateException()
+        if (user.uuid.toString() == auth.attributes["sub"]) {
+            throw DeleteSelfException()
+        }
+        return userRepository.deleteById(id)
+    }
 }
