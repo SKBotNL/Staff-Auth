@@ -7,8 +7,8 @@ import net.trueog.staffauth.client.MinecraftClient
 import net.trueog.staffauth.dto.admin.CreateUserDto
 import net.trueog.staffauth.dto.admin.UpdateUserDto
 import net.trueog.staffauth.dto.admin.UserDto
-import net.trueog.staffauth.exception.user.ChangeOwnRoleException
 import net.trueog.staffauth.exception.user.DeactivateSelfException
+import net.trueog.staffauth.exception.user.DeleteSelfException
 import net.trueog.staffauth.exception.user.DuplicateMinecraftUuidException
 import net.trueog.staffauth.exception.user.InvalidMinecraftUuidException
 import net.trueog.staffauth.repository.UserRepository
@@ -37,14 +37,14 @@ class UserService(private val userRepository: UserRepository, private val minecr
         if (updateUserDto.minecraftUuid != null && userRepository.findByMinecraftUuid(updateUserDto.minecraftUuid)
                 ?.let { it.id != user.id } == true
         ) throw DuplicateMinecraftUuidException()
-        if (updateUserDto.deactivated == true && user.id.toString() == auth.attributes["sub"]) {
-            throw DeactivateSelfException()
-        }
-        if (updateUserDto.role != user.role && user.id.toString() == auth.attributes["sub"]) {
-            throw ChangeOwnRoleException()
+        if (user.uuid.toString() == auth.attributes["sub"]) {
+            if (updateUserDto.deactivated == true || updateUserDto.role != user.role) {
+                throw DeactivateSelfException()
+            }
         }
 
-        val username = minecraftClient.getByUuid(updateUserDto.minecraftUuid ?: user.minecraftUuid)?.name ?: throw InvalidMinecraftUuidException()
+        val username = minecraftClient.getByUuid(updateUserDto.minecraftUuid ?: user.minecraftUuid)?.name
+            ?: throw InvalidMinecraftUuidException()
         val updatedUser = userRepository.update(
             user.copy(
                 email = updateUserDto.email ?: user.email,

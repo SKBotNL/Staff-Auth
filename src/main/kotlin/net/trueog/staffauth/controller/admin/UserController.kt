@@ -11,6 +11,7 @@ import net.trueog.staffauth.dto.admin.UpdateUserDto
 import net.trueog.staffauth.dto.admin.UserDto
 import net.trueog.staffauth.exception.user.ChangeOwnRoleException
 import net.trueog.staffauth.exception.user.DeactivateSelfException
+import net.trueog.staffauth.exception.user.DeleteSelfException
 import net.trueog.staffauth.exception.user.InvalidMinecraftUuidException
 import net.trueog.staffauth.service.UserService
 

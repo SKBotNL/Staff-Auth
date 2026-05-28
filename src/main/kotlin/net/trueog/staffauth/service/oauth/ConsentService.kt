@@ -9,6 +9,7 @@ import sh.ory.hydra.model.AcceptOAuth2ConsentRequestSession
 import sh.ory.hydra.model.OAuth2ConsentRequest
 import sh.ory.hydra.model.RejectOAuth2Request
 import java.net.URI
+import java.util.*
 
 @Singleton
 class ConsentService(
@@ -22,7 +23,7 @@ class ConsentService(
 
     suspend fun accept(consentRequest: OAuth2ConsentRequest): URI {
         val subject = consentRequest.subject ?: throw IllegalStateException()
-        val user = userRepository.findById(subject.toLong()) ?: throw IllegalStateException()
+        val user = userRepository.findByUuid(UUID.fromString(subject)) ?: throw IllegalStateException()
         val claims = buildMap {
             if (consentRequest.requestedScope?.contains("email") == true) put("email", user.email)
             if (consentRequest.requestedScope?.contains("roles") == true) put("roles", arrayOf(user.role))

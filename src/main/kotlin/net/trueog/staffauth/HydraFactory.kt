@@ -5,7 +5,6 @@ import io.micronaut.context.annotation.Value
 import jakarta.inject.Singleton
 import sh.ory.hydra.ApiClient
 import sh.ory.hydra.api.OAuth2Api
-import java.util.UUID
 
 @Factory
 class HydraFactory {

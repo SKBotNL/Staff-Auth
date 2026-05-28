@@ -1,12 +1,7 @@
 package net.trueog.staffauth.service
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import dev.samstevens.totp.code.CodeVerifier
-import dev.samstevens.totp.code.HashingAlgorithm
-import dev.samstevens.totp.qr.QrData
-import dev.samstevens.totp.qr.ZxingPngQrGenerator
 import dev.samstevens.totp.secret.SecretGenerator
-import dev.samstevens.totp.util.Utils.getDataUriForImage
 import jakarta.inject.Singleton
 import net.trueog.staffauth.client.MinecraftClient
 import net.trueog.staffauth.dto.TotpSetupDto
@@ -31,7 +26,6 @@ class SetupService(
     private val ipCheckerStub: IpCheckerGrpcKt.IpCheckerCoroutineStub,
     private val totpService: TotpService,
     private val secretGenerator: SecretGenerator,
-    private val codeVerifier: CodeVerifier,
     private val minecraftClient: MinecraftClient
 ) {
     /** Maps setup token to [SetupStage]. */

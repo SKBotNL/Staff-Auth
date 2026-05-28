@@ -111,12 +111,12 @@ class LoginService(
         val loginStage = loginStageMap.getIfPresent(loginChallenge) ?: throw InvalidLoginChallengeException()
         if (loginStage !is LoginStage.AwaitingAccept) throw IncorrectLoginStageException(loginStage)
 
-        userRepository.findById(loginStage.userId)
+        val user = userRepository.findById(loginStage.userId)
             ?: throw IllegalStateException() // Check if user still exists before we authorize
 
         val response = oAuth2Api.acceptOAuth2LoginRequest(
             loginRequest.challenge,
-            AcceptOAuth2LoginRequest().subject(loginStage.userId.toString()).remember(true).rememberFor(3600)
+            AcceptOAuth2LoginRequest().subject(user.uuid.toString()).remember(true).rememberFor(3600)
         )
         loginStageMap.invalidate(loginChallenge)
         return response.redirectTo

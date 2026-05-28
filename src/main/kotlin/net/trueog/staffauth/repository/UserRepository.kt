@@ -8,5 +8,6 @@ import java.util.*
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
 abstract class UserRepository : CoroutineCrudRepository<User, Long> {
+    abstract suspend fun findByUuid(uuid: UUID): User?
     abstract suspend fun findByMinecraftUuid(minecraftUuid: UUID): User?
 }

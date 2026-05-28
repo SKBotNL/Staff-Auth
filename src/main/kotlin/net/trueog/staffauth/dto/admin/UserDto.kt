@@ -8,6 +8,7 @@ import java.util.*
 @Serdeable
 data class UserDto(
     val id: Long,
+    val uuid: UUID,
     val username: String,
     val email: String?,
     val role: Role,
@@ -18,6 +19,7 @@ data class UserDto(
     companion object {
         fun fromEntity(entity: User, username: String) = UserDto(
             entity.id!!,
+            entity.uuid!!,
             username,
             entity.email,
             entity.role,
