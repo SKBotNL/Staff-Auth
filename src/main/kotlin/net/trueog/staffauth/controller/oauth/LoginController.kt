@@ -69,14 +69,14 @@ class LoginController(
         HttpResponse.unauthorized<String>().body("INVALID_LOGIN_CHALLENGE")
 
     @Error(exception = StatusException::class)
-    fun onGrpcStatusException(exception: StatusException): HttpResponse<String> {
-        if (exception.status.code != Status.Code.DEADLINE_EXCEEDED) {
-            if (exception.status.code == Status.Code.UNAVAILABLE) {
-                return HttpResponse.status<Unit>(HttpStatus.SERVICE_UNAVAILABLE).body("MINECRAFT_CHECK_UNAVAILABLE")
-            }
-            throw exception
-        }
-        return HttpResponse.status<Unit>(HttpStatus.GATEWAY_TIMEOUT).body("MINECRAFT_CHECK_TIMEOUT")
+    fun onGrpcStatusException(exception: StatusException): HttpResponse<String> = when (exception.status.code) {
+        Status.Code.DEADLINE_EXCEEDED -> HttpResponse.status<Unit>(HttpStatus.GATEWAY_TIMEOUT)
+            .body("MINECRAFT_CHECK_TIMEOUT")
+
+        Status.Code.UNAVAILABLE -> HttpResponse.status<Unit>(HttpStatus.SERVICE_UNAVAILABLE)
+            .body("MINECRAFT_CHECK_UNAVAILABLE")
+
+        else -> throw exception
     }
 
     @Error(exception = ApiException::class)

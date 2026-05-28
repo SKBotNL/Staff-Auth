@@ -9,9 +9,9 @@ import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.validation.Valid
+import net.trueog.staffauth.dto.TotpSetupDto
 import net.trueog.staffauth.dto.setup.DetailsDto
 import net.trueog.staffauth.dto.setup.TokenDto
-import net.trueog.staffauth.dto.setup.TotpDto
 import net.trueog.staffauth.dto.setup.TotpVerifyDto
 import net.trueog.staffauth.exception.IncorrectTotpCodeException
 import net.trueog.staffauth.exception.setup.DeactivatedException
@@ -55,9 +55,14 @@ open class SetupController(
     fun onIncorrectTotpCode(): HttpResponse<String> = HttpResponse.unauthorized<String>().body("INCORRECT_TOTP_CODE")
 
     @Error(exception = StatusException::class)
-    fun onGrpcStatusException(exception: StatusException): HttpResponse<String> {
-        if (exception.status != Status.DEADLINE_EXCEEDED) throw exception
-        return HttpResponse.status<Unit>(HttpStatus.GATEWAY_TIMEOUT).body("MINECRAFT_CHECK_TIMEOUT")
+    fun onGrpcStatusException(exception: StatusException): HttpResponse<String> = when (exception.status.code) {
+        Status.Code.DEADLINE_EXCEEDED -> HttpResponse.status<Unit>(HttpStatus.GATEWAY_TIMEOUT)
+            .body("MINECRAFT_CHECK_TIMEOUT")
+
+        Status.Code.UNAVAILABLE -> HttpResponse.status<Unit>(HttpStatus.SERVICE_UNAVAILABLE)
+            .body("MINECRAFT_CHECK_UNAVAILABLE")
+
+        else -> throw exception
     }
 
     @Error(exception = IncorrectSetupStageException::class)
