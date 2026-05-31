@@ -10,6 +10,7 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import net.trueog.staffauth.dto.login.CredentialsDto
+import net.trueog.staffauth.dto.login.LoginDataDto
 import net.trueog.staffauth.dto.login.MinecraftCheckDto
 import net.trueog.staffauth.dto.login.TotpDto
 import net.trueog.staffauth.exception.IncorrectTotpCodeException
@@ -26,9 +27,9 @@ import sh.ory.hydra.ApiException
 class LoginController(
     private val loginService: LoginService,
 ) {
-    @Get("/currentStage")
-    fun currentStage(@QueryValue("login_challenge") loginChallenge: String): String =
-        loginService.getCurrentStage(loginChallenge)
+    @Get("/data")
+    fun loginData(@QueryValue("login_challenge") loginChallenge: String): LoginDataDto =
+        loginService.getLoginData(loginChallenge)
 
     @Post("/credentials")
     suspend fun credentials(@Body credentialsDto: CredentialsDto) {
@@ -43,7 +44,7 @@ class LoginController(
     @Post("/totp")
     suspend fun totp(@Body totpDto: TotpDto): String {
         loginService.totp(totpDto.loginChallenge, totpDto.code)
-        val redirectUri = loginService.accept(totpDto.loginChallenge)
+        val redirectUri = loginService.accept(totpDto.loginChallenge, totpDto.rememberMe)
         return redirectUri
     }
 

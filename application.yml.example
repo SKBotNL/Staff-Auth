@@ -20,6 +20,7 @@ frontend:
 
 hydra:
   host: http://localhost:4445
+  remember-duration: 12h
 
 db:
   url: postgresql://localhost:5432/staffauth

@@ -2,8 +2,12 @@ package net.trueog.staffauth.service.oauth
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import dev.samstevens.totp.code.CodeVerifier
+import io.micronaut.context.annotation.Value
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.exceptions.HttpStatusException
 import jakarta.inject.Singleton
 import net.trueog.staffauth.client.MinecraftClient
+import net.trueog.staffauth.dto.login.LoginDataDto
 import net.trueog.staffauth.exception.IncorrectTotpCodeException
 import net.trueog.staffauth.exception.login.IncorrectLoginStageException
 import net.trueog.staffauth.exception.login.IncorrectUsernameOrPasswordException
@@ -33,14 +37,25 @@ class LoginService(
 
     val totpRegex = "^\\d{6}$".toRegex()
 
-    fun getCurrentStage(loginChallenge: String) = when (loginStageMap.getIfPresent(loginChallenge)) {
-        is LoginStage.AwaitingMinecraftCheck -> "MINECRAFT_CHECK"
-        is LoginStage.AwaitingTotp -> "TOTP"
-        is LoginStage.AwaitingAccept -> "ACCEPT"
+    @Value($$"${hydra.remember-duration}")
+    lateinit var rememberDuration: Duration
+
+    fun getLoginData(loginChallenge: String): LoginDataDto = when (loginStageMap.getIfPresent(loginChallenge)) {
+        is LoginStage.AwaitingMinecraftCheck -> LoginDataDto(false, null, "MINECRAFT_CHECK")
+        is LoginStage.AwaitingTotp -> LoginDataDto(false, null, "TOTP")
+        is LoginStage.AwaitingAccept -> LoginDataDto(false, null, "ACCEPT")
         null -> {
             try {
-                oAuth2Api.getOAuth2LoginRequest(loginChallenge)
-                "CREDENTIALS"
+                val loginRequest = oAuth2Api.getOAuth2LoginRequest(loginChallenge)
+                if (loginRequest.skip) {
+                    val response = oAuth2Api.acceptOAuth2LoginRequest(
+                        loginRequest.challenge,
+                        AcceptOAuth2LoginRequest().subject(loginRequest.subject)
+                    )
+                    LoginDataDto(true, response.redirectTo, null)
+                } else {
+                    LoginDataDto(false, null, "CREDENTIALS")
+                }
             } catch (_: ApiException) {
                 throw InvalidLoginChallengeException()
             }
@@ -48,7 +63,13 @@ class LoginService(
     }
 
     suspend fun usernamePassword(loginChallenge: String, username: String, password: String) {
-        oAuth2Api.getOAuth2LoginRequest(loginChallenge) // Throws sh.ory.hydra.ApiException if invalid
+        val loginRequest =
+            oAuth2Api.getOAuth2LoginRequest(loginChallenge) // Throws sh.ory.hydra.ApiException if invalid
+        if (loginRequest.skip) throw HttpStatusException(
+            HttpStatus.BAD_REQUEST,
+            ""
+        ) // This function shouldn't be called if login should be skipped
+
         loginStageMap.getIfPresent(loginChallenge)?.let {
             throw IncorrectLoginStageException(it)
         }
@@ -72,7 +93,13 @@ class LoginService(
     }
 
     suspend fun minecraftCheck(loginChallenge: String, ip: String): Boolean {
-        oAuth2Api.getOAuth2LoginRequest(loginChallenge) // Throws sh.ory.hydra.ApiException if invalid
+        val loginRequest =
+            oAuth2Api.getOAuth2LoginRequest(loginChallenge) // Throws sh.ory.hydra.ApiException if invalid
+        if (loginRequest.skip) throw HttpStatusException(
+            HttpStatus.BAD_REQUEST,
+            ""
+        ) // This function shouldn't be called if login should be skipped
+
         val loginStage = loginStageMap.getIfPresent(loginChallenge) ?: throw InvalidLoginChallengeException()
         if (loginStage !is LoginStage.AwaitingMinecraftCheck) throw IncorrectLoginStageException(loginStage)
 
@@ -89,7 +116,13 @@ class LoginService(
     }
 
     suspend fun totp(loginChallenge: String, code: String) {
-        oAuth2Api.getOAuth2LoginRequest(loginChallenge) // Throws sh.ory.hydra.ApiException if invalid
+        val loginRequest =
+            oAuth2Api.getOAuth2LoginRequest(loginChallenge) // Throws sh.ory.hydra.ApiException if invalid
+        if (loginRequest.skip) throw HttpStatusException(
+            HttpStatus.BAD_REQUEST,
+            ""
+        ) // This function shouldn't be called if login should be skipped
+
         val loginStage = loginStageMap.getIfPresent(loginChallenge) ?: throw InvalidLoginChallengeException()
         if (loginStage !is LoginStage.AwaitingTotp) throw IncorrectLoginStageException(loginStage)
 
@@ -105,9 +138,14 @@ class LoginService(
         loginStageMap.put(loginChallenge, LoginStage.AwaitingAccept(loginStage.userId))
     }
 
-    suspend fun accept(loginChallenge: String): String {
+    suspend fun accept(loginChallenge: String, rememberMe: Boolean): String {
         val loginRequest =
             oAuth2Api.getOAuth2LoginRequest(loginChallenge) // Throws sh.ory.hydra.ApiException if invalid
+        if (loginRequest.skip) throw HttpStatusException(
+            HttpStatus.BAD_REQUEST,
+            ""
+        ) // This function shouldn't be called if login should be skipped
+
         val loginStage = loginStageMap.getIfPresent(loginChallenge) ?: throw InvalidLoginChallengeException()
         if (loginStage !is LoginStage.AwaitingAccept) throw IncorrectLoginStageException(loginStage)
 
@@ -116,7 +154,9 @@ class LoginService(
 
         val response = oAuth2Api.acceptOAuth2LoginRequest(
             loginRequest.challenge,
-            AcceptOAuth2LoginRequest().subject(user.uuid.toString()).remember(true).rememberFor(3600)
+            AcceptOAuth2LoginRequest().subject(user.uuid.toString()).remember(rememberMe).apply {
+                if (rememberMe) rememberFor(rememberDuration.seconds)
+            }
         )
         loginStageMap.invalidate(loginChallenge)
         return response.redirectTo
