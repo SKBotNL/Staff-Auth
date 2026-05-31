@@ -57,7 +57,7 @@ class UserService(private val userRepository: UserRepository, private val minecr
     }
 
     suspend fun delete(id: Long, auth: Authentication): Int {
-        val user = userRepository.findById(id) ?: throw IllegalStateException()
+        val user = userRepository.findById(id) ?: return 0
         if (user.uuid.toString() == auth.attributes["sub"]) {
             throw DeleteSelfException()
         }
