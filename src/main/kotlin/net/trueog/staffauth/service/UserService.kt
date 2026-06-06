@@ -15,7 +15,7 @@ import net.trueog.staffauth.repository.UserRepository
 
 @Singleton
 class UserService(private val userRepository: UserRepository, private val minecraftClient: MinecraftClient) {
-    fun list() = userRepository.findAll().map {
+    fun list() = userRepository.findAllOrderById().map {
         val username = minecraftClient.getByUuid(it.minecraftUuid)?.name ?: throw IllegalStateException()
         UserDto.fromEntity(it, username)
     }

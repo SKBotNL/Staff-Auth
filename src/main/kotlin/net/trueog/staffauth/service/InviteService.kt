@@ -17,7 +17,7 @@ class InviteService(
     private val userRepository: UserRepository,
     private val tokenGeneratorService: TokenGeneratorService
 ) {
-    fun list() = inviteRepository.findAll().map { InviteDto.fromEntity(it) }
+    fun list() = inviteRepository.findAllOrderById().map { InviteDto.fromEntity(it) }
 
     suspend fun get(id: Long) = inviteRepository.findById(id)?.let {
         InviteDto.fromEntity(it)
