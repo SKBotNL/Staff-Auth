@@ -17,7 +17,7 @@ data class User(
     @field:Id
     @field:GeneratedValue(GeneratedValue.Type.AUTO)
     var id: Long? = null,
-    @field:GeneratedValue(GeneratedValue.Type.AUTO)
+    @field:AutoPopulated
     var uuid: UUID? = null
 ) {
     @Transient
