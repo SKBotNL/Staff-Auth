@@ -9,7 +9,7 @@ import java.util.*
 data class UserDto(
     val id: Long,
     val uuid: UUID,
-    val username: String,
+    val username: String?,
     val email: String?,
     val role: Role,
     val minecraftUuid: UUID,
@@ -17,7 +17,7 @@ data class UserDto(
     val setUp: Boolean
 ) {
     companion object {
-        fun fromEntity(entity: User, username: String) = UserDto(
+        fun fromEntity(entity: User, username: String?) = UserDto(
             entity.id!!,
             entity.uuid!!,
             username,

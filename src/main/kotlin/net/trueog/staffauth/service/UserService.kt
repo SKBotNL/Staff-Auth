@@ -16,19 +16,19 @@ import net.trueog.staffauth.repository.UserRepository
 @Singleton
 class UserService(private val userRepository: UserRepository, private val minecraftClient: MinecraftClient) {
     fun list() = userRepository.findAllOrderById().map {
-        val username = minecraftClient.getByUuid(it.minecraftUuid)?.name ?: throw IllegalStateException()
+        val username = minecraftClient.getByUuid(it.minecraftUuid)?.name
         UserDto.fromEntity(it, username)
     }
 
     suspend fun get(id: Long) = userRepository.findById(id)?.let {
-        val username = minecraftClient.getByUuid(it.minecraftUuid)?.name ?: throw IllegalStateException()
+        val username = minecraftClient.getByUuid(it.minecraftUuid)?.name
         UserDto.fromEntity(it, username)
     }
 
     suspend fun create(createUserDto: CreateUserDto): UserDto {
         if (userRepository.findByMinecraftUuid(createUserDto.minecraftUuid) != null) throw DuplicateMinecraftUuidException()
+        val username = minecraftClient.getByUuid(createUserDto.minecraftUuid)?.name ?: throw InvalidMinecraftUuidException()
         val user = userRepository.save(createUserDto.toEntity())
-        val username = minecraftClient.getByUuid(user.minecraftUuid)?.name ?: throw IllegalStateException()
         return UserDto.fromEntity(user, username)
     }
 
@@ -43,8 +43,9 @@ class UserService(private val userRepository: UserRepository, private val minecr
             }
         }
 
-        val username = minecraftClient.getByUuid(updateUserDto.minecraftUuid ?: user.minecraftUuid)?.name
-            ?: throw InvalidMinecraftUuidException()
+        if (updateUserDto.minecraftUuid != null) {
+            minecraftClient.getByUuid(updateUserDto.minecraftUuid) ?: throw InvalidMinecraftUuidException()
+        }
         val updatedUser = userRepository.update(
             user.copy(
                 email = updateUserDto.email ?: user.email,
@@ -53,6 +54,7 @@ class UserService(private val userRepository: UserRepository, private val minecr
                 deactivated = updateUserDto.deactivated ?: user.deactivated
             )
         )
+        val username = minecraftClient.getByUuid(updatedUser.minecraftUuid)?.name
         return UserDto.fromEntity(updatedUser, username)
     }
 

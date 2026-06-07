@@ -33,7 +33,7 @@ class ConsentService(
             if (consentRequest.requestedScope?.contains("email") == true) put("email", user.email)
             if (consentRequest.requestedScope?.contains("roles") == true) put("roles", arrayOf(user.role))
             if (consentRequest.requestedScope?.contains("profile") == true) {
-                put("name", minecraftClient.getByUuid(user.minecraftUuid)?.name ?: throw IllegalStateException())
+                put("name", minecraftClient.getByUuid(user.minecraftUuid)?.name ?: "Unknown username")
                 put("picture", "https://minotar.net/helm/${user.minecraftUuid.toString().replace("-", "")}.png")
             }
         }
