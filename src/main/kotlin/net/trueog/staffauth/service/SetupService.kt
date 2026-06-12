@@ -63,7 +63,9 @@ class SetupService(
                 )!!
             )
         )
-        setupStageMap.put(token, details)
+        setupStageMap.asMap().putIfAbsent(token, details)?.let {
+            throw IncorrectSetupStageException(it)
+        }
     }
 
     suspend fun minecraftCheck(token: String, ip: String): Boolean {

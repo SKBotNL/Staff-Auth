@@ -89,7 +89,9 @@ class LoginService(
             throw IncorrectUsernameOrPasswordException()
         }
 
-        loginStageMap.put(loginChallenge, LoginStage.AwaitingMinecraftCheck(userId))
+        loginStageMap.asMap().putIfAbsent(loginChallenge, LoginStage.AwaitingMinecraftCheck(userId))?.let {
+            throw IncorrectLoginStageException(it)
+        }
     }
 
     suspend fun minecraftCheck(loginChallenge: String, ip: String): Boolean {
