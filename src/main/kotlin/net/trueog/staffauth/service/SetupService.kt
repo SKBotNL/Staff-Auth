@@ -29,7 +29,7 @@ class SetupService(
     private val minecraftClient: MinecraftClient
 ) {
     /** Maps setup token to [SetupStage]. */
-    val setupStageMap = Caffeine.newBuilder().expireAfterAccess(Duration.ofMinutes(20)).build<String, SetupStage>()
+    val setupStageMap = Caffeine.newBuilder().expireAfterWrite(Duration.ofMinutes(20)).build<String, SetupStage>()
 
     suspend fun getCurrentStage(token: String) = when (setupStageMap.getIfPresent(token)) {
         is SetupStage.AwaitingMinecraftCheck -> "MINECRAFT_CHECK"

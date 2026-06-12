@@ -32,7 +32,7 @@ class LoginService(
     private val codeVerifier: CodeVerifier
 ) {
     val loginStageMap = Caffeine.newBuilder()
-        .expireAfterAccess(Duration.ofMinutes(5))
+        .expireAfterWrite(Duration.ofMinutes(5))
         .build<String, LoginStage>()
 
     val totpRegex = "^\\d{6}$".toRegex()
