@@ -51,7 +51,7 @@ dependencies {
     implementation("sh.ory.hydra:hydra-client:26.2.0")
     implementation("io.micronaut:micronaut-http-client")
     runtimeOnly("ch.qos.logback:logback-classic")
-    runtimeOnly("org.flywaydb:flyway-database-postgresql")
+    runtimeOnly("org.flywaydb:flyway-database-postgresql:12.8.1")
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin") {
