@@ -5,6 +5,7 @@ import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
+import net.trueog.staffauth.dto.ErrorDto
 import net.trueog.staffauth.dto.consent.ConsentDto
 import net.trueog.staffauth.service.oauth.ConsentService
 import sh.ory.hydra.ApiException
@@ -36,12 +37,12 @@ class ConsentController(
     }
 
     @Error(exception = ApiException::class)
-    fun onHydraApiException(exception: ApiException): HttpResponse<String> {
+    fun onHydraApiException(exception: ApiException): HttpResponse<ErrorDto> {
         return when (exception.code) {
-            401, 404 -> HttpResponse.unauthorized<String>().body("INVALID_CONSENT_CHALLENGE")
-            410 -> HttpResponse.unauthorized<String>().body("CONSENT_REQUEST_USED")
+            401, 404 -> HttpResponse.unauthorized<Unit>().body(ErrorDto.Default("INVALID_CONSENT_CHALLENGE"))
+            410 -> HttpResponse.unauthorized<Unit>().body(ErrorDto.Default("CONSENT_REQUEST_USED"))
             else -> HttpResponse.status<Unit>(HttpStatus.valueOf(exception.code.takeIf { it != 0 } ?: 500))
-                .body("HYDRA")
+                .body(ErrorDto.Default("HYDRA"))
         }
     }
 }

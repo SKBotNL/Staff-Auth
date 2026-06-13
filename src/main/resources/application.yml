@@ -14,7 +14,7 @@ micronaut:
     reject-not-found: false
     redirect:
       login-success: ${frontend.host}
-      login-failure: ${frontend.host}
+      login-failure: ${frontend.host}/login-failure
       logout: ${frontend.host}/logged-out
     endpoints:
       logout:

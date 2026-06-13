@@ -9,9 +9,7 @@ import jakarta.inject.Singleton
 import net.trueog.staffauth.client.MinecraftClient
 import net.trueog.staffauth.dto.login.LoginDataDto
 import net.trueog.staffauth.exception.IncorrectTotpCodeException
-import net.trueog.staffauth.exception.login.IncorrectLoginStageException
-import net.trueog.staffauth.exception.login.IncorrectUsernameOrPasswordException
-import net.trueog.staffauth.exception.login.InvalidLoginChallengeException
+import net.trueog.staffauth.exception.login.*
 import net.trueog.staffauth.model.LoginStage
 import net.trueog.staffauth.repository.UserRepository
 import net.trueog.staffauth.service.Argon2idPasswordEncoderService
@@ -20,6 +18,8 @@ import proto.ipCheckRequest
 import sh.ory.hydra.ApiException
 import sh.ory.hydra.api.OAuth2Api
 import sh.ory.hydra.model.AcceptOAuth2LoginRequest
+import sh.ory.hydra.model.OAuth2LoginRequest
+import sh.ory.hydra.model.RejectOAuth2Request
 import java.time.Duration
 
 @Singleton
@@ -62,7 +62,7 @@ class LoginService(
         }
     }
 
-    suspend fun usernamePassword(loginChallenge: String, username: String, password: String) {
+    suspend fun usernamePassword(loginChallenge: String, username: String, password: String, ip: String) {
         val loginRequest =
             oAuth2Api.getOAuth2LoginRequest(loginChallenge) // Throws sh.ory.hydra.ApiException if invalid
         if (loginRequest.skip) throw HttpStatusException(
@@ -89,70 +89,56 @@ class LoginService(
             throw IncorrectUsernameOrPasswordException()
         }
 
-        loginStageMap.asMap().putIfAbsent(loginChallenge, LoginStage.AwaitingMinecraftCheck(userId))?.let {
+        loginStageMap.asMap().putIfAbsent(loginChallenge, LoginStage.AwaitingMinecraftCheck(userId, ip))?.let {
             throw IncorrectLoginStageException(it)
         }
     }
 
     suspend fun minecraftCheck(loginChallenge: String, ip: String): Boolean {
-        val loginRequest =
-            oAuth2Api.getOAuth2LoginRequest(loginChallenge) // Throws sh.ory.hydra.ApiException if invalid
-        if (loginRequest.skip) throw HttpStatusException(
-            HttpStatus.BAD_REQUEST,
-            ""
-        ) // This function shouldn't be called if login should be skipped
-
-        val loginStage = loginStageMap.getIfPresent(loginChallenge) ?: throw InvalidLoginChallengeException()
-        if (loginStage !is LoginStage.AwaitingMinecraftCheck) throw IncorrectLoginStageException(loginStage)
-
-        val uuid = userRepository.findById(loginStage.userId)?.minecraftUuid ?: throw IllegalStateException()
+        val (loginStage, _) = validateRequest<LoginStage.AwaitingMinecraftCheck>(loginChallenge, ip, oAuth2Api)
+        val uuid = userRepository.findById(loginStage.userId)?.minecraftUuid
+        if (uuid == null) {
+            val response = oAuth2Api.rejectOAuth2LoginRequest(loginChallenge, RejectOAuth2Request())
+            throw UnrecoverableException(response.redirectTo)
+        }
 
         val reply = ipCheckerStub.checkIp(ipCheckRequest {
             this.uuid = uuid.toString()
         })
         val valid = reply.ip == ip
         if (valid) {
-            loginStageMap.put(loginChallenge, LoginStage.AwaitingTotp(loginStage.userId))
+            loginStageMap.put(loginChallenge, LoginStage.AwaitingTotp(loginStage.userId, ip))
         }
         return valid
     }
 
-    suspend fun totp(loginChallenge: String, code: String) {
-        val loginRequest =
-            oAuth2Api.getOAuth2LoginRequest(loginChallenge) // Throws sh.ory.hydra.ApiException if invalid
-        if (loginRequest.skip) throw HttpStatusException(
-            HttpStatus.BAD_REQUEST,
-            ""
-        ) // This function shouldn't be called if login should be skipped
-
-        val loginStage = loginStageMap.getIfPresent(loginChallenge) ?: throw InvalidLoginChallengeException()
-        if (loginStage !is LoginStage.AwaitingTotp) throw IncorrectLoginStageException(loginStage)
+    suspend fun totp(loginChallenge: String, code: String, ip: String) {
+        val (loginStage, _) = validateRequest<LoginStage.AwaitingTotp>(loginChallenge, ip, oAuth2Api)
 
         if (!totpRegex.matches(code)) {
             throw IncorrectTotpCodeException()
         }
 
-        val totpSecret = userRepository.findById(loginStage.userId)?.totpSecret ?: throw IllegalStateException()
+        val totpSecret = userRepository.findById(loginStage.userId)?.totpSecret
+        if (totpSecret == null) {
+            val response = oAuth2Api.rejectOAuth2LoginRequest(loginChallenge, RejectOAuth2Request())
+            throw UnrecoverableException(response.redirectTo)
+        }
 
         if (!codeVerifier.isValidCode(totpSecret, code)) {
             throw IncorrectTotpCodeException()
         }
-        loginStageMap.put(loginChallenge, LoginStage.AwaitingAccept(loginStage.userId))
+        loginStageMap.put(loginChallenge, LoginStage.AwaitingAccept(loginStage.userId, ip))
     }
 
-    suspend fun accept(loginChallenge: String, rememberMe: Boolean): String {
-        val loginRequest =
-            oAuth2Api.getOAuth2LoginRequest(loginChallenge) // Throws sh.ory.hydra.ApiException if invalid
-        if (loginRequest.skip) throw HttpStatusException(
-            HttpStatus.BAD_REQUEST,
-            ""
-        ) // This function shouldn't be called if login should be skipped
-
-        val loginStage = loginStageMap.getIfPresent(loginChallenge) ?: throw InvalidLoginChallengeException()
-        if (loginStage !is LoginStage.AwaitingAccept) throw IncorrectLoginStageException(loginStage)
+    suspend fun accept(loginChallenge: String, rememberMe: Boolean, ip: String): String {
+        val (loginStage, loginRequest) = validateRequest<LoginStage.AwaitingAccept>(loginChallenge, ip, oAuth2Api)
 
         val user = userRepository.findById(loginStage.userId)
-            ?: throw IllegalStateException() // Check if user still exists before we authorize
+        if (user == null) {
+            val response = oAuth2Api.rejectOAuth2LoginRequest(loginChallenge, RejectOAuth2Request())
+            throw UnrecoverableException(response.redirectTo)
+        }
 
         val response = oAuth2Api.acceptOAuth2LoginRequest(
             loginRequest.challenge,
@@ -162,5 +148,26 @@ class LoginService(
         )
         loginStageMap.invalidate(loginChallenge)
         return response.redirectTo
+    }
+
+    inline fun <reified T : LoginStage> validateRequest(
+        loginChallenge: String,
+        ip: String,
+        oAuth2Api: OAuth2Api
+    ): Pair<T, OAuth2LoginRequest> {
+        val loginRequest =
+            oAuth2Api.getOAuth2LoginRequest(loginChallenge) // Throws sh.ory.hydra.ApiException if invalid
+        if (loginRequest.skip) throw HttpStatusException(
+            HttpStatus.BAD_REQUEST,
+            ""
+        ) // This function shouldn't be called if login should be skipped
+
+        val loginStage = loginStageMap.getIfPresent(loginChallenge) ?: throw InvalidLoginChallengeException()
+        if (loginStage !is T) throw IncorrectLoginStageException(loginStage)
+        if (loginStage.ip != ip) {
+            val response = oAuth2Api.rejectOAuth2LoginRequest(loginChallenge, RejectOAuth2Request())
+            throw DifferentIpException(response.redirectTo)
+        }
+        return Pair(loginStage, loginRequest)
     }
 }

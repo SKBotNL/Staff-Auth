@@ -9,6 +9,7 @@ import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.rules.SecurityRule
 import jakarta.validation.Valid
+import net.trueog.staffauth.dto.ErrorDto
 import net.trueog.staffauth.dto.TotpSetupDto
 import net.trueog.staffauth.dto.setup.DetailsDto
 import net.trueog.staffauth.dto.setup.TokenDto
@@ -49,30 +50,34 @@ open class SetupController(
     }
 
     @Error(exception = DeactivatedException::class)
-    fun onDeactivated(): HttpResponse<String> = HttpResponse.unauthorized<String>().body("DEACTIVATED")
+    fun onDeactivated(): HttpResponse<ErrorDto> =
+        HttpResponse.unauthorized<Unit>().body(ErrorDto.Default("DEACTIVATED"))
 
     @Error(exception = IncorrectTotpCodeException::class)
-    fun onIncorrectTotpCode(): HttpResponse<String> = HttpResponse.unauthorized<String>().body("INCORRECT_TOTP_CODE")
+    fun onIncorrectTotpCode(): HttpResponse<ErrorDto> =
+        HttpResponse.unauthorized<Unit>().body(ErrorDto.Default("INCORRECT_TOTP_CODE"))
 
     @Error(exception = StatusException::class)
-    fun onGrpcStatusException(exception: StatusException): HttpResponse<String> = when (exception.status.code) {
+    fun onGrpcStatusException(exception: StatusException): HttpResponse<ErrorDto> = when (exception.status.code) {
         Status.Code.DEADLINE_EXCEEDED -> HttpResponse.status<Unit>(HttpStatus.GATEWAY_TIMEOUT)
-            .body("MINECRAFT_CHECK_TIMEOUT")
+            .body(ErrorDto.Default("MINECRAFT_CHECK_TIMEOUT"))
 
         Status.Code.UNAVAILABLE -> HttpResponse.status<Unit>(HttpStatus.SERVICE_UNAVAILABLE)
-            .body("MINECRAFT_CHECK_UNAVAILABLE")
+            .body(ErrorDto.Default("MINECRAFT_CHECK_UNAVAILABLE"))
 
         else -> throw exception
     }
 
     @Error(exception = IncorrectSetupStageException::class)
-    fun onIncorrectSetupStage(exception: IncorrectSetupStageException): HttpResponse<String> =
+    fun onIncorrectSetupStage(exception: IncorrectSetupStageException): HttpResponse<ErrorDto> =
         HttpResponse.status<Unit>(HttpStatus.CONFLICT).body(
-            when (exception.correctSetupStage) {
-                is SetupStage.AwaitingMinecraftCheck -> "MINECRAFT_CHECK"
-                is SetupStage.AwaitingTotp -> "TOTP"
-                is SetupStage.AwaitingTotpVerify -> "TOTP"
-                is SetupStage.AwaitingFinalize -> "FINALIZE"
-            }
+            ErrorDto.Default(
+                when (exception.correctSetupStage) {
+                    is SetupStage.AwaitingMinecraftCheck -> "MINECRAFT_CHECK"
+                    is SetupStage.AwaitingTotp -> "TOTP"
+                    is SetupStage.AwaitingTotpVerify -> "TOTP"
+                    is SetupStage.AwaitingFinalize -> "FINALIZE"
+                }
+            )
         )
 }

@@ -27,7 +27,8 @@ class UserService(private val userRepository: UserRepository, private val minecr
 
     suspend fun create(createUserDto: CreateUserDto): UserDto {
         if (userRepository.findByMinecraftUuid(createUserDto.minecraftUuid) != null) throw DuplicateMinecraftUuidException()
-        val username = minecraftClient.getByUuid(createUserDto.minecraftUuid)?.name ?: throw InvalidMinecraftUuidException()
+        val username =
+            minecraftClient.getByUuid(createUserDto.minecraftUuid)?.name ?: throw InvalidMinecraftUuidException()
         val user = userRepository.save(createUserDto.toEntity())
         return UserDto.fromEntity(user, username)
     }

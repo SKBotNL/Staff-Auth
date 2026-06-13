@@ -6,6 +6,7 @@ import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
 import io.micronaut.security.authentication.Authentication
 import kotlinx.coroutines.flow.Flow
+import net.trueog.staffauth.dto.ErrorDto
 import net.trueog.staffauth.dto.admin.CreateUserDto
 import net.trueog.staffauth.dto.admin.UpdateUserDto
 import net.trueog.staffauth.dto.admin.UserDto
@@ -41,14 +42,15 @@ class UserController(private val userService: UserService) {
         if (userService.delete(id, auth) > 0) HttpResponse.noContent() else HttpResponse.notFound()
 
     @Error(exception = InvalidMinecraftUuidException::class)
-    fun onInvalidMinecraftUuid(): HttpResponse<String> = HttpResponse.badRequest("INVALID_MINECRAFT_UUID")
+    fun onInvalidMinecraftUuid(): HttpResponse<ErrorDto> =
+        HttpResponse.badRequest(ErrorDto.Default("INVALID_MINECRAFT_UUID"))
 
     @Error(exception = DeactivateSelfException::class)
-    fun onDeactivateSelf(): HttpResponse<String> = HttpResponse.badRequest("DEACTIVATE_SELF")
+    fun onDeactivateSelf(): HttpResponse<ErrorDto> = HttpResponse.badRequest(ErrorDto.Default("DEACTIVATE_SELF"))
 
     @Error(exception = DeleteSelfException::class)
-    fun onDeleteSelf(): HttpResponse<String> = HttpResponse.badRequest("DELETE_SELF")
+    fun onDeleteSelf(): HttpResponse<ErrorDto> = HttpResponse.badRequest(ErrorDto.Default("DELETE_SELF"))
 
     @Error(exception = ChangeOwnRoleException::class)
-    fun onChangeOwnRole(): HttpResponse<String> = HttpResponse.badRequest("CHANGE_OWN_ROLE")
+    fun onChangeOwnRole(): HttpResponse<ErrorDto> = HttpResponse.badRequest(ErrorDto.Default("CHANGE_OWN_ROLE"))
 }
