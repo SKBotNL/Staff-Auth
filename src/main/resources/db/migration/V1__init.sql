@@ -13,6 +13,6 @@ CREATE TABLE users
 CREATE TABLE invites
 (
     id              SERIAL PRIMARY KEY,
-    token           TEXT UNIQUE                          NOT NULL,
-    invited_user_id INTEGER REFERENCES users (id) UNIQUE NOT NULL
+    token           TEXT UNIQUE                                            NOT NULL,
+    invited_user_id INTEGER REFERENCES users (id) ON DELETE CASCADE UNIQUE NOT NULL
 );
