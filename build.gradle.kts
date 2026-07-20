@@ -1,8 +1,9 @@
 import com.google.protobuf.gradle.id
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "2.3.21"
-    id("org.jetbrains.kotlin.plugin.allopen") version "2.3.21"
+    kotlin("jvm") version "2.3.21"
+    kotlin("kapt") version "2.3.21"
+    kotlin("plugin.allopen") version "2.3.21"
     id("com.google.devtools.ksp") version "2.3.8"
     id("io.micronaut.application") version "4.6.2"
     id("com.gradleup.shadow") version "8.3.9"
@@ -55,11 +56,12 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin") {
-      exclude(group = "org.jetbrains.kotlin", module = "kotlin-reflect")
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-reflect")
     }
     runtimeOnly("org.yaml:snakeyaml")
     testImplementation("io.micronaut:micronaut-http-client")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation(kotlin("test"))
 }
 
 application {
