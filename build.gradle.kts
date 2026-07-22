@@ -4,18 +4,17 @@ plugins {
     kotlin("jvm") version "2.3.21"
     kotlin("kapt") version "2.3.21"
     kotlin("plugin.allopen") version "2.3.21"
-    id("com.google.devtools.ksp") version "2.3.8"
+    id("com.google.devtools.ksp") version "2.3.10"
     id("io.micronaut.application") version "4.6.2"
-    id("com.gradleup.shadow") version "8.3.9"
-    id("com.google.protobuf") version "0.10.0"
     id("io.micronaut.aot") version "4.6.2"
+    id("com.gradleup.shadow") version "9.6.1"
+    id("com.google.protobuf") version "0.10.0"
 }
 
 version = "0.1"
 group = "net.trueog.staffauth"
 
-
-val kotlinVersion = project.properties["kotlinVersion"]
+val kotlinVersion = project.property("kotlinVersion")
 
 repositories {
     mavenCentral()
@@ -27,7 +26,7 @@ dependencies {
     ksp("io.micronaut.security:micronaut-security-annotations")
     ksp("io.micronaut.serde:micronaut-serde-processor")
     ksp("io.micronaut.validation:micronaut-validation-processor")
-    implementation("com.google.protobuf:protobuf-kotlin:4.34.1")
+    implementation("com.google.protobuf:protobuf-kotlin:4.35.1")
     implementation("io.micronaut.grpc:micronaut-grpc-runtime")
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.grpc:grpc-kotlin-stub:1.5.0")
@@ -38,7 +37,7 @@ dependencies {
     implementation("io.micronaut.security:micronaut-security-oauth2")
     implementation("io.micronaut.security:micronaut-security-jwt")
     implementation("io.micronaut.cache:micronaut-cache-caffeine")
-    implementation("org.springframework.security:spring-security-crypto:7.0.5")
+    implementation("org.springframework.security:spring-security-crypto:7.1.0")
     implementation("org.bouncycastle:bcprov-jdk18on:1.84")
     implementation("org.slf4j:jcl-over-slf4j")
     implementation("io.micronaut.serde:micronaut-serde-jackson")
@@ -52,7 +51,7 @@ dependencies {
     implementation("sh.ory.hydra:hydra-client:26.2.0")
     implementation("io.micronaut:micronaut-http-client")
     runtimeOnly("ch.qos.logback:logback-classic")
-    runtimeOnly("org.flywaydb:flyway-database-postgresql:12.8.1")
+    runtimeOnly("org.flywaydb:flyway-database-postgresql:12.10.0")
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin") {
@@ -86,11 +85,11 @@ sourceSets {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:4.34.1"
+        artifact = "com.google.protobuf:protoc:4.35.1"
     }
     plugins {
         id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:1.81.0"
+            artifact = "io.grpc:protoc-gen-grpc-java:1.82.2"
         }
         id("grpckt") {
             artifact = "io.grpc:protoc-gen-grpc-kotlin:1.5.0:jdk8@jar"
