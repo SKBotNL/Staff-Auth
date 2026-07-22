@@ -29,7 +29,7 @@ micronaut:
   caches:
     minecraft-profiles:
       charset: UTF-8
-      expire-after-write: 30m
+      expire-after-write: 1h
 
 grpc:
   server:
