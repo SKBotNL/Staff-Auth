@@ -37,7 +37,7 @@ class InitialConfig(
                 .fold(true) { acc, user -> acc && (!user.isSetUp) }
         ) {
             if (adminUuid == null) {
-                log.error("Not set up but initialSetup.adminUuid not set or invalid, exiting...")
+                log.error("Not set up and initialSetup.adminUuid is not set or invalid, exiting...")
                 exitProcess(1)
             }
             inviteRepository.deleteAll()
