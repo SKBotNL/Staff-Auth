@@ -25,7 +25,7 @@ import net.trueog.staffauth.service.SetupService
 open class SetupController(
     private val setupService: SetupService
 ) {
-    @Get("/currentStage")
+    @Get("/current-stage")
     suspend fun currentStage(@QueryValue("token") token: String): String = setupService.getCurrentStage(token)
 
     @Post("/details")
@@ -33,17 +33,17 @@ open class SetupController(
         return setupService.details(detailsDto.token, detailsDto)
     }
 
-    @Post("/minecraftcheck")
+    @Post("/minecraft-check")
     suspend fun minecraftCheck(@Body tokenDto: TokenDto, request: HttpRequest<*>): Boolean {
         return setupService.minecraftCheck(tokenDto.token, request.remoteAddress.address.hostAddress)
     }
 
-    @Post("/totpsetup")
+    @Post("/totp-setup")
     suspend fun totpSetup(@Body tokenDto: TokenDto): TotpSetupDto {
         return setupService.generateTotp(tokenDto.token)
     }
 
-    @Post("/totpverify")
+    @Post("/totp-verify")
     suspend fun totpVerify(@Body totpVerifyDto: TotpVerifyDto) {
         setupService.verifyTotp(totpVerifyDto.token, totpVerifyDto.code)
         setupService.finalize(totpVerifyDto.token)
