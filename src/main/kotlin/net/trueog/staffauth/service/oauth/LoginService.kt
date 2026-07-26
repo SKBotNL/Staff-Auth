@@ -96,14 +96,13 @@ class LoginService(
 
     suspend fun minecraftCheck(loginChallenge: String, ip: String): Boolean {
         val (loginStage, _) = validateRequest<LoginStage.AwaitingMinecraftCheck>(loginChallenge, ip, oAuth2Api)
-        val uuid = userRepository.findById(loginStage.userId)?.minecraftUuid
-        if (uuid == null) {
+        val user = userRepository.findById(loginStage.userId)
+        if (user == null || user.deactivated) {
             val response = oAuth2Api.rejectOAuth2LoginRequest(loginChallenge, RejectOAuth2Request())
             throw UnrecoverableException(response.redirectTo)
         }
-
         val reply = ipCheckerStub.checkIp(ipCheckRequest {
-            this.uuid = uuid.toString()
+            this.uuid = user.uuid.toString()
         })
         val valid = reply.ip == ip
         if (valid) {
@@ -119,13 +118,12 @@ class LoginService(
             throw IncorrectTotpCodeException()
         }
 
-        val totpSecret = userRepository.findById(loginStage.userId)?.totpSecret
-        if (totpSecret == null) {
+        val user = userRepository.findById(loginStage.userId)
+        if (user == null || user.deactivated) {
             val response = oAuth2Api.rejectOAuth2LoginRequest(loginChallenge, RejectOAuth2Request())
             throw UnrecoverableException(response.redirectTo)
         }
-
-        if (!codeVerifier.isValidCode(totpSecret, code)) {
+        if (!codeVerifier.isValidCode(user.totpSecret, code)) {
             throw IncorrectTotpCodeException()
         }
         loginStageMap.put(loginChallenge, LoginStage.AwaitingAccept(loginStage.userId, ip))
@@ -135,7 +133,7 @@ class LoginService(
         val (loginStage, loginRequest) = validateRequest<LoginStage.AwaitingAccept>(loginChallenge, ip, oAuth2Api)
 
         val user = userRepository.findById(loginStage.userId)
-        if (user == null) {
+        if (user == null || user.deactivated) {
             val response = oAuth2Api.rejectOAuth2LoginRequest(loginChallenge, RejectOAuth2Request())
             throw UnrecoverableException(response.redirectTo)
         }
