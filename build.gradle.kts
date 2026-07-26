@@ -37,6 +37,7 @@ dependencies {
     implementation("io.micronaut.security:micronaut-security-oauth2")
     implementation("io.micronaut.security:micronaut-security-jwt")
     implementation("io.micronaut.cache:micronaut-cache-caffeine")
+    implementation("org.springframework:spring-core:7.0.8")
     implementation("org.springframework.security:spring-security-crypto:7.1.0")
     implementation("org.bouncycastle:bcprov-jdk18on:1.84")
     implementation("org.slf4j:jcl-over-slf4j")
