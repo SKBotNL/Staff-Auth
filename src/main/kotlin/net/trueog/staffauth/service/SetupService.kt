@@ -34,7 +34,7 @@ class SetupService(
     suspend fun getCurrentStage(token: String) = when (setupStageMap.getIfPresent(token)) {
         is SetupStage.AwaitingMinecraftCheck -> "MINECRAFT_CHECK"
         is SetupStage.AwaitingTotp -> "TOTP"
-        is SetupStage.AwaitingTotpVerify -> "TOTP_VERIFY"
+        is SetupStage.AwaitingTotpVerify -> "TOTP"
         is SetupStage.AwaitingFinalize -> "FINALIZE"
         null -> {
             inviteRepository.findByToken(token) ?: throw InvalidInviteException()
