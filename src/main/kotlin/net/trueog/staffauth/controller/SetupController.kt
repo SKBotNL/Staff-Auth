@@ -4,6 +4,7 @@ import io.grpc.Status
 import io.grpc.StatusException
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.server.util.HttpClientAddressResolver
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.annotation.*
 import io.micronaut.security.annotation.Secured
@@ -23,7 +24,8 @@ import net.trueog.staffauth.service.SetupService
 @Controller("/setup")
 @Secured(SecurityRule.IS_ANONYMOUS)
 open class SetupController(
-    private val setupService: SetupService
+    private val setupService: SetupService,
+    private val clientAddressResolver: HttpClientAddressResolver
 ) {
     @Get("/current-stage")
     suspend fun currentStage(@QueryValue("token") token: String): String = setupService.getCurrentStage(token)
@@ -35,7 +37,7 @@ open class SetupController(
 
     @Post("/minecraft-check")
     suspend fun minecraftCheck(@Body tokenDto: TokenDto, request: HttpRequest<*>): Boolean {
-        return setupService.minecraftCheck(tokenDto.token, request.remoteAddress.address.hostAddress)
+        return setupService.minecraftCheck(tokenDto.token, clientAddressResolver.resolve(request))
     }
 
     @Post("/totp-setup")
