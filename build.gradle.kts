@@ -4,8 +4,8 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.allopen")
     id("com.google.devtools.ksp") version "2.3.12"
-    id("io.micronaut.application") version "4.6.2"
-    id("io.micronaut.aot") version "4.6.2"
+    id("io.micronaut.application") version "5.0.2"
+    id("io.micronaut.aot") version "5.0.2"
     id("com.gradleup.shadow") version "9.6.1"
     id("com.google.protobuf") version "0.10.0"
 }
@@ -25,6 +25,7 @@ dependencies {
     ksp("io.micronaut.security:micronaut-security-annotations")
     ksp("io.micronaut.serde:micronaut-serde-processor")
     ksp("io.micronaut.validation:micronaut-validation-processor")
+    ksp("org.slf4j:slf4j-nop:2.0.19")
     implementation("com.google.protobuf:protobuf-kotlin:4.36.2")
     implementation("io.micronaut.validation:micronaut-validation")
     implementation("io.grpc:grpc-protobuf:1.84.0")
@@ -70,7 +71,7 @@ application {
 }
 
 java {
-    sourceCompatibility = JavaVersion.toVersion("17")
+    sourceCompatibility = JavaVersion.toVersion("25")
 }
 
 graalvmNative.toolchainDetection = false

@@ -36,8 +36,9 @@ open class SetupController(
     }
 
     @Post("/minecraft-check")
-    suspend fun minecraftCheck(@Body tokenDto: TokenDto, request: HttpRequest<*>): Boolean {
-        return setupService.minecraftCheck(tokenDto.token, clientAddressResolver.resolve(request))
+    suspend fun minecraftCheck(@Body tokenDto: TokenDto, request: HttpRequest<*>): HttpResponse<Boolean> {
+        val ip = clientAddressResolver.resolve(request) ?: return HttpResponse.badRequest()
+        return HttpResponse.ok(setupService.minecraftCheck(tokenDto.token, ip))
     }
 
     @Post("/totp-setup")

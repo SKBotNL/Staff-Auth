@@ -34,26 +34,30 @@ class LoginController(
         loginService.loginData(loginDataRequestDto.loginChallenge)
 
     @Post("/credentials")
-    suspend fun credentials(@Body credentialsDto: CredentialsDto, request: HttpRequest<*>) {
+    suspend fun credentials(@Body credentialsDto: CredentialsDto, request: HttpRequest<*>): HttpResponse<Unit> {
+        val ip = clientAddressResolver.resolve(request) ?: return HttpResponse.badRequest()
         loginService.usernamePassword(
             credentialsDto.loginChallenge,
             credentialsDto.username,
             credentialsDto.password,
-            clientAddressResolver.resolve(request)
+            ip
         )
+        return HttpResponse.ok()
     }
 
     @Post("/minecraftcheck")
-    suspend fun minecraftCheck(@Body minecraftCheckDto: MinecraftCheckDto, request: HttpRequest<*>): Boolean {
-        return loginService.minecraftCheck(minecraftCheckDto.loginChallenge, clientAddressResolver.resolve(request))
+    suspend fun minecraftCheck(@Body minecraftCheckDto: MinecraftCheckDto, request: HttpRequest<*>): HttpResponse<Boolean> {
+        val ip = clientAddressResolver.resolve(request) ?: return HttpResponse.badRequest()
+        return HttpResponse.ok(loginService.minecraftCheck(minecraftCheckDto.loginChallenge, ip))
     }
 
     @Post("/totp")
-    suspend fun totp(@Body totpDto: TotpDto, request: HttpRequest<*>): String {
-        loginService.totp(totpDto.loginChallenge, totpDto.code, clientAddressResolver.resolve(request))
+    suspend fun totp(@Body totpDto: TotpDto, request: HttpRequest<*>): HttpResponse<String> {
+        val ip = clientAddressResolver.resolve(request) ?: return HttpResponse.badRequest()
+        loginService.totp(totpDto.loginChallenge, totpDto.code, ip)
         val redirectUrl =
-            loginService.accept(totpDto.loginChallenge, totpDto.rememberMe, clientAddressResolver.resolve(request))
-        return redirectUrl
+            loginService.accept(totpDto.loginChallenge, totpDto.rememberMe, ip)
+        return HttpResponse.ok(redirectUrl)
     }
 
     @Error(exception = IncorrectUsernameOrPasswordException::class)
