@@ -13,7 +13,13 @@ micronaut:
               url: http://localhost:4444/oauth2/sessions/logout
 
 plugin:
-  address: http://localhost:65226
+  host: localhost
+  port: 65226
+  ssl:
+    enabled: false
+    trust-ca:
+    cert:
+    private-key:
 
 frontend:
   host: http://localhost:3000
